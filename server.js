@@ -1,47 +1,29 @@
 const { ApolloServer } = require('apollo-server')
-const gql = require('graphql-tag');
-const mongoose = require('mongoose');
 
-const { MONGODB } = require('./config')
+const MongoClient = require('mongodb').MongoClient
 
-const typeDefs = gql`
-    type Query{
-        sayHi:String!
-    }
-`
-const resolvers = {
-    Query:{
-        sayHi: ()=>'hello world'
-    }
-}
+const typeDefs = require('./graphql/typeDefs');
+const resolvers = require('./graphql/resolvers')
+
+
+
+const url = "mongodb://localhost:27017";
+
+const client = new MongoClient(url, { useNewUrlParser: true, useUnifiedTopology: true });
+client.connect(function (err){
+    console.log("MongoDb connected");
+    db = client.db("employees")
+    if(err) throw err
+})
+
+
 
 const server = new ApolloServer({
     typeDefs,
-    resolvers
+    resolvers,
+    context:({req})=>({req})
 });
-
-mongoose.connect(MONGODB, {useNewUrlParser: true})
-    .then(()=>{
-        console.log('mongo db connected')
-        return server.listen({port:5000})
-        .then(res =>{
-            console.log(`Sever is runnign at ${res.url}`)
-        })
-    });
+server.listen(5000).then(({ url }) => console.log(`Server running at ${ url } `));
 
 
 
-
-// var MongoClient = require('mongodb').MongoClient;
-// var url = "mongodb://localhost:27017/";
-
-// MongoClient.connect(url,(err,db)=>{
-//     if(err) throw err;
-//     var dbo = db.db("test02");
-//     dbo.createCollection("customers", (err,res)=>{
-//         if (err) throw err;
-//         console.log("Collection created");
-//         db.close();
-//     })
-    
-// });
